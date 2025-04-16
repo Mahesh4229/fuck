@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cricket World Cup Dashboard</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .chart-container {
+      margin-bottom: 60px;
+    }
+
+    .tooltip {
+      position: absolute;
+      padding: 6px 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    h2 {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Cricket World Cup Dashboard</h1>
+
+  <div class="chart-container" id="homeWins">
+    <h2>1. Home Ground Wins</h2>
+  </div>
+
+  <div class="chart-container" id="battingChasing">
+    <h2>2. Batting First vs Chasing Wins</h2>
+  </div>
+
+  <div class="chart-container" id="totalWins">
+    <h2>3. Total Wins by Team</h2>
+  </div>
+
+  <script src="home_wins.js"></script>
+  <script src="batting_vs_chasing.js"></script>
+  <script src="total_wins_pie.js"></script>
+</body>
+
+</html>

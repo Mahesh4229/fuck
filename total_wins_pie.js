@@ -35,17 +35,14 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("stroke", "#fff")
     .attr("stroke-width", 1);
 
-  // Add tooltip functionality
-  const tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
-
-  slices.on("mouseover", function(event, d) {
-    tooltip.transition().duration(200).style("opacity", .9);
-    tooltip.html(`${d.data.team} Wins: ${d.data.wins}`)
-      .style("left", `${event.pageX + 5}px`)
-      .style("top", `${event.pageY - 28}px`);
-  }).on("mouseout", function(d) {
-    tooltip.transition().duration(500).style("opacity", 0);
-  });
+  // Add labels for each slice (team names and win counts)
+  svg.selectAll("text")
+    .data(arcs)
+    .enter().append("text")
+    .attr("transform", d => `translate(${arc.centroid(d)})`)
+    .attr("dy", ".35em")
+    .attr("text-anchor", "middle")
+    .text(d => `${d.data.team}: ${d.data.wins}`)
+    .style("font-size", "12px")
+    .style("fill", "#000");
 });

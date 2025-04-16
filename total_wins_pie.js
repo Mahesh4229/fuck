@@ -50,7 +50,7 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     tooltip.transition().duration(500).style("opacity", 0);
   });
 
-  // Add labels for each slice (team names)
+  // Add labels for each slice (team names) positioned outside the pie slices
   svg.selectAll("text")
     .data(arcs)
     .enter().append("text")
@@ -59,9 +59,9 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("text-anchor", "middle")
     .text(d => d.data.team)
     .style("font-size", "12px")
-    .style("fill", "#fff");
+    .style("fill", "#000");
 
-  // Add win labels outside the pie slices
+  // Add labels for wins outside the pie slices
   svg.selectAll("text.label")
     .data(arcs)
     .enter().append("text")
@@ -71,5 +71,5 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("text-anchor", "middle")
     .text(d => `${d.data.wins}`)
     .style("font-size", "10px")
-    .style("fill", "#fff");
+    .style("fill", "#000");
 });

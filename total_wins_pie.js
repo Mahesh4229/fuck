@@ -8,14 +8,14 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
   }));
 
   // Set up chart dimensions and radius
-  const width = 500, height = 500, radius = Math.min(width, height) / 2;
+  const width = 600, height = 600, radius = Math.min(width, height) / 2;
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   // Create pie and arc generators
   const pie = d3.pie().value(d => d.wins);
   const arc = d3.arc().innerRadius(0).outerRadius(radius);
 
-  // Select the container and append the SVG
+  // Create the SVG container
   const svg = d3.select("#totalWins")
     .append("svg")
     .attr("width", width)
@@ -25,7 +25,7 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
 
   // Create pie chart arcs
   const arcs = pie(dataset);
-  
+
   // Append arcs (pie slices)
   const slices = svg.selectAll("path")
     .data(arcs)
@@ -49,7 +49,7 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     tooltip.transition().duration(500).style("opacity", 0);
   });
 
-  // Add labels for each slice (team names)
+  // Add labels for each slice (team names with wins)
   svg.selectAll("text")
     .data(arcs)
     .enter().append("text")
@@ -57,6 +57,28 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
     .text(d => d.data.team)
-    .style("font-size", "10px")
+    .style("font-size", "12px")
+    .style("fill", "#fff");
+
+  // Add lines and labels to indicate the team names
+  svg.selectAll("line")
+    .data(arcs)
+    .enter().append("line")
+    .attr("x1", d => arc.centroid(d)[0])
+    .attr("y1", d => arc.centroid(d)[1])
+    .attr("x2", d => arc.centroid(d)[0] * 1.5)
+    .attr("y2", d => arc.centroid(d)[1] * 1.5)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1);
+
+  svg.selectAll("text")
+    .data(arcs)
+    .enter().append("text")
+    .attr("x", d => arc.centroid(d)[0] * 1.5)
+    .attr("y", d => arc.centroid(d)[1] * 1.5)
+    .attr("dy", ".35em")
+    .attr("text-anchor", "middle")
+    .text(d => `${d.data.team}: ${d.data.wins}`)
+    .style("font-size", "12px")
     .style("fill", "#fff");
 });

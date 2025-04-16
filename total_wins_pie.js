@@ -61,18 +61,15 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .style("font-size", "12px")
     .style("fill", "#fff");
 
-  // Add lines connecting the labels to the pie slices
-  svg.selectAll("polyline")
+  // Add win labels outside the pie slices
+  svg.selectAll("text.label")
     .data(arcs)
-    .enter().append("polyline")
-    .attr("points", function(d) {
-      const pos = outerArc.centroid(d);
-      const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-      const lineX = radius * Math.cos(midAngle);
-      const lineY = radius * Math.sin(midAngle);
-      return [arc.centroid(d), [lineX, lineY], pos];
-    })
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 1)
-    .attr("fill", "none");
+    .enter().append("text")
+    .attr("x", d => outerArc.centroid(d)[0])
+    .attr("y", d => outerArc.centroid(d)[1])
+    .attr("dy", "-1em")
+    .attr("text-anchor", "middle")
+    .text(d => `${d.data.wins}`)
+    .style("font-size", "10px")
+    .style("fill", "#fff");
 });

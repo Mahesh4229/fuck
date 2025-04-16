@@ -1,90 +1,135 @@
 d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
-  // Prepare the data by counting wins for each team
-  const teams = [...new Set(data.flatMap(d => [d["Team 1"], d["Team 2"]]))].filter(Boolean);
-  const winCounts = d3.rollup(data.filter(d => d.Winner), v => v.length, d => d.Winner.trim());
-  const dataset = teams.map(team => ({
+  // Extract all unique teams from Team 1 and Team 2
+  const teams = [...new Set(data.flatMap(d => [d["Team 1"], d["Team 2"]]))].sort();
+
+  // Calculate wins for all teams
+  const winCounts = d3.rollup(
+    data.filter(d => d.Winner && d.Winner.trim() !== ""),
+    v => v.length,
+    d => d.Winner.trim()
+  );
+
+  // Create winData for all teams, including those with zero wins
+  const winData = teams.map(team => ({
     team,
-    wins: winCounts.get(team) || 0
-  }));
+    wins: winCounts.get(team) || 0 // Use 0 if the team has no wins
+  })).filter(d => d.team !== ""); // Remove any empty team names
 
-  // Set up chart dimensions and radius
-  const width = 600, height = 600, radius = Math.min(width, height) / 2;
-  const color = d3.scaleOrdinal(d3.schemeCategory10);
+  // SVG setup
+  const width = 800;
+  const height = 800;
+  const radius = Math.min(width, height) / 2 - 75;
 
-  // Create pie and arc generators
-  const pie = d3.pie().value(d => d.wins);
-  const arc = d3.arc().innerRadius(0).outerRadius(radius);
-  const outerArc = d3.arc().innerRadius(radius + 10).outerRadius(radius + 10);
-
-  // Create the SVG container
-  const svg = d3.select("#totalWins")
-    .append("svg")
+  const svg = d3.create("svg")
     .attr("width", width)
-    .attr("height", height)
-    .append("g")
+    .attr("height", height);
+
+  // Centering group
+  const g = svg.append("g")
     .attr("transform", `translate(${width / 2},${height / 2})`);
 
-  // Create pie chart arcs
-  const arcs = pie(dataset);
-
-  // Append arcs (pie slices)
-  const slices = svg.selectAll("path")
-    .data(arcs)
-    .enter().append("path")
-    .attr("d", arc)
-    .attr("fill", d => color(d.data.team))
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 1);
-
-  // Add tooltip functionality
-  const tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
+  // Tooltip
+  const tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("background", "#fff")
+    .style("border", "1px solid #ccc")
+    .style("padding", "6px 10px")
+    .style("border-radius", "4px")
+    .style("pointer-events", "none")
     .style("opacity", 0);
 
-  slices.on("mouseover", function(event, d) {
-    tooltip.transition().duration(200).style("opacity", .9);
-    tooltip.html(`${d.data.team} Wins: ${d.data.wins}`)
-      .style("left", `${event.pageX + 5}px`)
-      .style("top", `${event.pageY - 28}px`);
-  }).on("mouseout", function(d) {
-    tooltip.transition().duration(500).style("opacity", 0);
-  });
+  // Pie and Arc generators
+  const pie = d3.pie()
+    .value(d => d.wins + 0.001) // Ensure teams with 0 wins are shown
+    .sort(null);
 
-  // Add labels for each slice (team names) positioned outside the pie slices
-  svg.selectAll("text")
-    .data(arcs)
-    .enter().append("text")
-    .attr("transform", d => `translate(${outerArc.centroid(d)})`)
-    .attr("dy", ".35em")
-    .attr("text-anchor", "middle")
-    .text(d => d.data.team)
-    .style("font-size", "12px")
-    .style("fill", "#000");
+  const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(radius - 20);
 
-  // Add labels for wins outside the pie slices
-  svg.selectAll("text.label")
-    .data(arcs)
-    .enter().append("text")
-    .attr("x", d => outerArc.centroid(d)[0])
-    .attr("y", d => outerArc.centroid(d)[1])
-    .attr("dy", "-1em")
-    .attr("text-anchor", "middle")
-    .text(d => `${d.data.wins}`)
-    .style("font-size", "10px")
-    .style("fill", "#000");
+  const arcHover = d3.arc()
+    .innerRadius(0)
+    .outerRadius(radius);
 
-  // Add lines to connect labels to slices
-  svg.selectAll("polyline")
-    .data(arcs)
-    .enter().append("polyline")
-    .attr("points", function(d) {
-      const pos = outerArc.centroid(d);
-      const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-      const lineX = radius * Math.cos(midAngle);
-      const lineY = radius * Math.sin(midAngle);
-      return [arc.centroid(d), [lineX, lineY], pos];
+  const color = d3.scaleOrdinal()
+    .domain(winData.map(d => d.team))
+    .range(d3.schemeTableau10.concat(d3.schemeSet3).slice(0, winData.length));
+
+  // Draw slices
+  g.selectAll("path")
+    .data(pie(winData))
+    .enter()
+    .append("path")
+    .attr("d", arc)
+    .attr("fill", d => color(d.data.team))
+    .on("mouseover", function(event, d) {
+      d3.select(this).transition().duration(200).attr("d", arcHover(d));
+      tooltip
+        .html(`<strong>${d.data.team}</strong><br>Wins: ${d.data.wins}`)
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY - 28}px`)
+        .transition().duration(200)
+        .style("opacity", 0.9);
     })
-    .attr("stroke", "#000")
+    .on("mousemove", function(event) {
+      tooltip
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY - 28}px`);
+    })
+    .on("mouseout", function(event, d) {
+      d3.select(this).transition().duration(200).attr("d", arc(d));
+      tooltip.transition().duration(200).style("opacity", 0);
+    });
+
+  // Labels and polylines
+  const labelArc = d3.arc()
+    .innerRadius(radius - 40)
+    .outerRadius(radius + 20);
+
+  g.selectAll("text")
+    .data(pie(winData))
+    .enter()
+    .append("text")
+    .attr("transform", d => {
+      const pos = labelArc.centroid(d);
+      const angle = Math.atan2(pos[1], pos[0]);
+      const x = Math.cos(angle) * (radius + 30);
+      const y = Math.sin(angle) * (radius + 30);
+      return `translate(${x},${y})`;
+    })
+    .attr("text-anchor", d => {
+      const [x] = labelArc.centroid(d);
+      return x >= 0 ? "start" : "end";
+    })
+    .attr("dy", ".35em")
+    .style("font-size", "10px")
+    .text(d => d.data.team);
+
+  g.selectAll("polyline")
+    .data(pie(winData))
+    .enter()
+    .append("polyline")
+    .attr("stroke", "black")
     .attr("stroke-width", 1)
-    .attr("fill", "none");
+    .attr("fill", "none")
+    .attr("points", d => {
+      const pos = labelArc.centroid(d);
+      const angle = Math.atan2(pos[1], pos[0]);
+      const x = Math.cos(angle) * (radius + 30);
+      const y = Math.sin(angle) * (radius + 30);
+      const inner = arc.centroid(d);
+      return [inner, pos, [x, y]];
+    });
+
+  // Title
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", 30)
+    .attr("text-anchor", "middle")
+    .style("font-size", "18px")
+    .style("font-weight", "bold")
+    .text("3. Total Wins by Team");
+
+  return svg.node();
 });

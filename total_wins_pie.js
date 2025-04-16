@@ -14,6 +14,7 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
   // Create pie and arc generators
   const pie = d3.pie().value(d => d.wins);
   const arc = d3.arc().innerRadius(0).outerRadius(radius);
+  const outerArc = d3.arc().innerRadius(radius + 10).outerRadius(radius + 10);
 
   // Create the SVG container
   const svg = d3.select("#totalWins")
@@ -35,14 +36,55 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("stroke", "#fff")
     .attr("stroke-width", 1);
 
-  // Add labels for each slice (team names and win counts)
+  // Add tooltip functionality
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+  slices.on("mouseover", function(event, d) {
+    tooltip.transition().duration(200).style("opacity", .9);
+    tooltip.html(`${d.data.team} Wins: ${d.data.wins}`)
+      .style("left", `${event.pageX + 5}px`)
+      .style("top", `${event.pageY - 28}px`);
+  }).on("mouseout", function(d) {
+    tooltip.transition().duration(500).style("opacity", 0);
+  });
+
+  // Add labels for each slice (team names) positioned outside the pie slices
   svg.selectAll("text")
     .data(arcs)
     .enter().append("text")
-    .attr("transform", d => `translate(${arc.centroid(d)})`)
+    .attr("transform", d => `translate(${outerArc.centroid(d)})`)
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
-    .text(d => `${d.data.team}: ${d.data.wins}`)
+    .text(d => d.data.team)
     .style("font-size", "12px")
     .style("fill", "#000");
+
+  // Add labels for wins outside the pie slices
+  svg.selectAll("text.label")
+    .data(arcs)
+    .enter().append("text")
+    .attr("x", d => outerArc.centroid(d)[0])
+    .attr("y", d => outerArc.centroid(d)[1])
+    .attr("dy", "-1em")
+    .attr("text-anchor", "middle")
+    .text(d => `${d.data.wins}`)
+    .style("font-size", "10px")
+    .style("fill", "#000");
+
+  // Add lines to connect labels to slices
+  svg.selectAll("polyline")
+    .data(arcs)
+    .enter().append("polyline")
+    .attr("points", function(d) {
+      const pos = outerArc.centroid(d);
+      const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+      const lineX = radius * Math.cos(midAngle);
+      const lineY = radius * Math.sin(midAngle);
+      return [arc.centroid(d), [lineX, lineY], pos];
+    })
+    .attr("stroke", "#000")
+    .attr("stroke-width", 1)
+    .attr("fill", "none");
 });

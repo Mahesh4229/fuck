@@ -58,10 +58,11 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("text-anchor", "middle")
     .text(d => d.data.team)
     .style("font-size", "12px")
-    .style("fill", "#fff");
+    .style("fill", "#fff")
+    .style("pointer-events", "none");
 
-  // Add lines and labels to indicate the team names
-  svg.selectAll("line")
+  // Add lines to indicate the team names
+  const labelLine = svg.selectAll("line")
     .data(arcs)
     .enter().append("line")
     .attr("x1", d => arc.centroid(d)[0])
@@ -71,7 +72,8 @@ d3.csv("Cleaned_Cricket_Match_Dataset@1.csv").then(data => {
     .attr("stroke", "#fff")
     .attr("stroke-width", 1);
 
-  svg.selectAll("text")
+  // Add labels for team names and their respective wins
+  svg.selectAll("text.label")
     .data(arcs)
     .enter().append("text")
     .attr("x", d => arc.centroid(d)[0] * 1.5)
